@@ -1,20 +1,19 @@
 # Optimize MySQL statement
-Here are some methods to improve this SQL query:
 
-## 1. Use fewer `LIKE` wildcards
+Please check into file `optimize.sql` for the SQL statement that had been optimized. Here are the explanations:
 
-The `LIKE` `'%value%'` pattern is costly, particularly when applied to connected tables and many fields. If at all possible, substitute `LIKE` `'value%'` for partial matches or `LIKE =` for exact matches. As a result, a full-text scan is not as necessary.
+## 1. Subquery for Job Filtering
 
-## 2. Employ Indexing in Full Text
+The inner query `(FilteredJobs)` restricts the results to the `top 50` and pre-selects `Jobs` rows that satisfy the `LIKE` and `WHERE` constraints. By doing this, the volume of data is decreased before more joins are made.
 
-`JobCategories.name`, `JobTypes.name`, `Jobs.name`, and other fields searched with `LIKE` `'%value%'` would benefit from a full-text index. Compared to the `LIKE` wildcard, full-text indexing is quicker and more effective for these searches.
+## 2. Joining on Filtered Data
 
-## 3. Include indexes in the filtered and join columns.
+As needed, the main query joins `JobCategories`, `JobTypes`, and other relevant tables with the smaller set of filtered data.
 
-For joins and conditions, add indexes to the `Jobs.deleted`, `JobCategories.deleted`, and `JobTypes.deleted` columns.
-`WHERE` clauses often use index columns like `Jobs.publish_status` and `Jobs.deleted`.
+## 3. Optimizing LIMIT Usage
 
-## 4. Make `Group By` and `Order By` more efficient
+Performance is increased by using `LIMIT` in the subquery, which guarantees that only the `top 50` results are handled by follow-up joins.
 
-Make sure `Jobs.id` has an index since the query groups by `Jobs.id`.
-It is possible to improve sorting by `Jobs.sort_order` and `Jobs.id` by indexing both fields together.
+## 4. Decreased Data Load in Joins
+
+The join operation is less difficult overall because the filtering is done before the joins, which could result in speedier execution.
